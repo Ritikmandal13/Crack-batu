@@ -5,6 +5,7 @@ import "./globals.css"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { AuthProvider } from "@/hooks/use-auth"
+import AuthGate from "@/components/auth-gate"
 import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -25,10 +26,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
-          <Navbar />
-          <main>{children}</main>
-          <Footer />
-          <Toaster />
+          <AuthGate>
+            <Navbar />
+            <main>{children}</main>
+            <Footer />
+            <Toaster />
+          </AuthGate>
         </AuthProvider>
       </body>
     </html>

@@ -60,8 +60,8 @@ export default function SignupPage() {
     try {
       console.log("Calling signup...")
       await signup(email, password, name)
-      console.log("Signup successful, redirecting to dashboard")
-      router.push("/dashboard")
+      console.log("Signup successful, redirecting to home")
+      router.push("/")
     } catch (err: any) {
       console.error("Signup error:", err)
       setError(err.message || "Failed to create account. Please try again.")

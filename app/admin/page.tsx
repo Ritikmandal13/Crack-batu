@@ -158,6 +158,9 @@ export default function AdminPage() {
       const processedUrls = processGoogleDriveUrl(newPYQ.file_url)
       console.timeEnd('Process Google Drive URL')
 
+      // Add debug logging
+      console.log("Submitting new PYQ:", { ...newPYQ, created_by: user.id, file_url: processedUrls.file_url, view_url: processedUrls.view_url });
+
       console.time('Supabase Insert')
       const { data, error } = await supabase
         .from("pyqs")
@@ -170,6 +173,9 @@ export default function AdminPage() {
         .select()
         .single()
       console.timeEnd('Supabase Insert')
+
+      // Add debug logging
+      console.log("Insert result:", { data, error });
 
       if (error) throw error
 

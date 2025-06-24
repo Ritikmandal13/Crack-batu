@@ -122,7 +122,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     console.log("login() full result", result);
     if (result.error) {
-      throw new Error(result.error.message);
+      // Log the error details for debugging
+      console.error("Supabase login error:", result.error);
+      // Show a more descriptive error message if available
+      let message = result.error.message;
+      if (result.error.status === 400 && message.includes("Email not confirmed")) {
+        message = "Your email is not confirmed. Please check your inbox for a confirmation email.";
+      }
+      throw new Error(message);
+    }
+    if (!result.data.session) {
+      // No session returned, possibly due to unconfirmed email
+      throw new Error("Login failed: No session returned. Please check your credentials or confirm your email.");
     }
   };
 
@@ -132,6 +143,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: { name },
+        },
       })
 
       if (error) {
@@ -139,42 +153,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data.user) {
-        // Step 2: Wait a moment for the auth session to be established
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-
-        // Step 3: Create user profile with retry logic
-        let retries = 3
-        while (retries > 0) {
-          try {
-            const { error: profileError } = await supabase.from("users").insert({
-              id: data.user.id,
-              email,
-              name,
-              role: "student",
-              is_premium: false,
-            })
-
-            if (!profileError) {
-              break // Success, exit retry loop
-            }
-
-            if (profileError.message.includes("row-level security")) {
-              retries--
-              if (retries > 0) {
-                await new Promise((resolve) => setTimeout(resolve, 1000))
-                continue
-              }
-            }
-
-            throw profileError
-          } catch (retryError) {
-            if (retries === 1) {
-              throw retryError
-            }
-            retries--
-            await new Promise((resolve) => setTimeout(resolve, 1000))
-          }
-        }
+        // Always call fetchUserProfile to handle both insert and fetch cases
+        await fetchUserProfile({
+          ...data.user,
+          user_metadata: { name },
+        })
       }
     } catch (error: any) {
       throw new Error(error.message)
